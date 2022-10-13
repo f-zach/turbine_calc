@@ -1,3 +1,4 @@
+from cgi import print_environ
 import math
 import pandas as pd
 import numpy as np
@@ -5,7 +6,7 @@ from fluids import atmosphere as atm
 
 data = pd.read_csv(r'05_brk16_thr100.csv', sep=';', decimal=',')
 
-print(data.mean())
+#print(data.mean())
 
 p_BK = data.mean().p_BK*1e5
 delta_p = data.mean().delta_p*1e2
@@ -19,7 +20,7 @@ P = data.mean().P * 1e3
 p_env = data.mean().p_env*1e2
 T_env = data.mean().T_env
 
-print(T_env)
+#print(T_env)
 
 def calculateMassFlow(delta_p,p,T):
 
@@ -123,35 +124,92 @@ A2 = (pow(48.5e-3/2,2)-pow(15.5e-3/2,2))*math.pi
 Tt2 = T_env + 273.15
 
 u2 = (u1*A1)/A2
-print(u2, A2)
+#print(u2, A2)
 
 # Adibatic inlet T_t0 = T_t2, for now assumption p_t0 = p_t2, pt3 = p_bk (assumption due to low mach number)
-Pi_t23 = p_BK/p_env
+pt2 = p_env
+pt3 = p_BK
+
+Pi_t23 = pt3/pt2
 
 Tt3_is = Tt2*pow(Pi_t23, (kappa-1)/kappa)
 
 Tt3 = (Tt3_is - Tt2)/eta_isC + 273.15
 
-print(Tt2,Tt3)
+print("Tt3 =", Tt3)
 
 P_c = m_luft*c_p*(Tt3-Tt2)
 
-print(P_c,P)
-
-pt8 = p_env
-pt7 = pt8/0.99
-Tt7 = (T_links+T_rechts)/2 + 273.15
+d8 = 55e-3
+A8 = 2 * pow(d8/2,2) * math.pi
 
 
+T8 = []
+pt8 = []
+rho8 = []
+u8 = []
+Ma8 = []
+
+# assumption T8 = Tt8
+Tt8 = (T_links+T_rechts)/2 + 273.15
+p8 = p_env
+
+T8.append(Tt8)
+
+i = 0
+
+rho8.append(p8/(R*T8[i]))
+#print("rho8:",rho8)
+u8.append(m_luft/(A8*rho8[i]))
+#print("u8:",u8)
+Ma8.append(u8[i]/math.sqrt(kappa*R*T8[i]))
+#print("Ma8:", Ma8)
+T8.append(Tt8/(1+(kappa-1)/2*pow(Ma8[i],2)))
+pt8.append(p8*pow(Tt8/T8[i],kappa/(kappa-1)))
+
+print(pt8)
+error = 1
+while(error > 1e-6):
+    i += 1
+
+    #print("p8:", p8)
+    rho8.append(p8/(R*T8[i]))
+    #print("rho8:",rho8)
+    u8.append(m_luft/(A8*rho8[i]))
+    #print("u8:",u8)
+    Ma8.append(u8[i]/math.sqrt(kappa*R*T8[i]))
+    #print("Ma8:", Ma8)
+    T8.append(Tt8/(1+(kappa-1)/2*pow(Ma8[i],2)))
+    #print("T8:", T8)
+    pt8.append(p8*pow(Tt8/T8[i],kappa/(kappa-1)))
+    error = abs(T8[i-1]-T8[i])
+
+print(i, "iteraitons")
+print("T8 =", T8[i], "K")
+print("Tt8 =", Tt8, "K")
+print("p8 =", p8*1e-2, "mBar")
+print("pt8 =", pt8[i]*1e-2, "mBar")
+print(rho8)
+print("Ma8 =", Ma8[i])
+print("u8 =", u8)
+
+
+
+Tt7 = Tt8
+pt7 = pt8[i]/0.99
+print(pt7)
 
 m_tot = m_luft + m_br
 
-Tt44 = P/(m_tot * c_p) + Tt7
-pt44 = pt7*pow(Tt44/Tt7,kappa/(kappa-1))
+Tt4 = (P/0.94+P_c/0.99)/(m_tot * c_p) + Tt7
+pt4 = pt3*0.98
 
+Tt7_is = Tt4*pow(pt7/pt4,(kappa-1)/kappa)
+print(Tt7,Tt7_is)
 
-print(Tt44,pt44,pt7)
+eta47_is = (Tt4-Tt7)/(Tt4-Tt7_is)
+print(eta47_is)
 
-Tt4 =  P_c/(m_tot * c_p) + Tt44
+Q_Bk = m_luft * c_p*(Tt4-Tt3)
 
 print(Tt4)
