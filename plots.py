@@ -19,7 +19,6 @@ def getMeanData(directory,nStart,nEnd):
 
         if n > nEnd:
             print('done')
-            print(meanArray)
             break
 
     return meanArray

@@ -134,7 +134,7 @@ Pi_t23 = pt3/pt2
 
 Tt3_is = Tt2*pow(Pi_t23, (kappa-1)/kappa)
 
-Tt3 = (Tt3_is - Tt2)/eta_isC + 273.15
+Tt3 = (Tt3_is - Tt2)/eta_isC + Tt2
 
 print("Tt3 =", Tt3)
 
@@ -213,3 +213,49 @@ print(eta47_is)
 Q_Bk = m_luft * c_p*(Tt4-Tt3)
 
 print(Tt4)
+
+def computeCirceleArea(r):
+    A = math.pow(r/2,2) * math.pi
+    return A
+
+def computeVelocity(rho,m_dot,A):
+    u = m_dot/(rho*A)
+    return u
+
+def computeDensity(p,T,R = 287.05):
+    rho =  p/(R*T)
+    return rho
+
+def computeIsentropicPressure(p_in,T_in,T_out,kappa = 1.4):
+    p_out = p_in * pow(T_out/T_in,kappa/(kappa-1))
+    return p_out
+
+def computeIsentropicTemperature(T_in,p_in,p_out,kappa = 1.4):
+    T_out = T_in * pow(p_out/p_in,(kappa-1)/kappa)
+    return T_out
+
+def computeSpeedOfSound(T,kappa = 1.4, R=287.05):
+    a = math.sqrt(kappa*R*T)
+    return a
+
+def computeMachNumber(u,a):
+    return u/a
+
+def computeIsentropicEfficency(machineType,p_in,p_out,T_in,T_out,kappa = 1.4):
+    T_is = computeIsentropicTemperature(T_in, p_in, p_out, kappa)
+    if machineType == 'compressor':
+        eta_is = (T_is - T_in)/(T_out - T_in)
+    elif machineType == 'turbine':
+        eta_is = (T_in - T_out)/(T_in - T_is)
+
+    return eta_is
+
+def computeTemperatureFromIsEff(machineType,p_in,p_out,T_in,eta_is,kappa = 1.4):
+    T_is = computeIsentropicTemperature(T_in,p_in,p_out,kappa)
+    if machineType == 'compressor':
+        T_out = (T_is - T_in) / eta_is + T_in
+    elif machineType == 'turbine':
+        T_out = T_in - (T_in - T_is) * eta_is
+
+    return T_out
+
