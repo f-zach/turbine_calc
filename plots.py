@@ -9,27 +9,27 @@ import functions as f
 
 np.set_printoptions(precision=4)
 
-def getMeanData(directory,nStart,nEnd):
+def getMeanData(directory,throttleSettingValue):
 
-    meanArray = np.zeros((nEnd-nStart+1,13))
+    throttleSetting = 'thr' + str(throttleSettingValue)
 
-    n = nStart
-    for file in os.listdir(directory):
-        filename = os.fsdecode(file)
-        if filename.startswith(str(n).zfill(2) or str(n)):
-            data = pd.read_csv(os.path.join(directory,filename), sep=';', decimal=',')
-            meanArray[n-nStart,:] = data.mean().to_numpy()
-            n += 1
+    fileList = os.listdir(directory)
 
-        if n > nEnd:
-            print('done')
-            break
+    meanArray = np.empty([sum(throttleSetting in s for s in fileList),13])
+
+    i = 0
+    for file in fileList:
+
+        if throttleSetting in file:
+            data = pd.read_csv(os.path.join(directory,file), sep=';', decimal=',')
+            meanArray[i,:] = data.mean().to_numpy()
+            i += 1
 
     return meanArray
 
 directory = './data/2022-08-25_Messdaten'
 
-z = getMeanData(directory,2,12)
+z = getMeanData(directory,100)
 
 plt.close()
 
@@ -39,12 +39,13 @@ y = z[:,9]
 
 plt.plot(x, y)
 
-z = getMeanData(directory,13,21)
+z = getMeanData(directory,75)
 
 x = z[:,7]
 
 y = z[:,9]
 
 plt.plot(x, y)
-plt.axis([3000, 7000, 0, 13])
+
+plt.axis([3000, 7200, 0, 13])
 plt.show()
