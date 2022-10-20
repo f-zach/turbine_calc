@@ -43,9 +43,9 @@ y = z[:,9]
 xx = x
 yy = y
 
-zz = (y*1e3)/(z[:,2]*(43e3)*300/350)
-print(y*1e3,z[:,2]*(43e3)*300/350)
-plt.plot(x, y)
+zz = (y*1e3)/(z[:,2]*43e3*300/350)
+
+# plt.plot(x, y)
 
 z = getMeanData(directory,75)
 
@@ -55,13 +55,15 @@ y = z[:,9]
 
 xx = np.append(xx,x,0)
 yy = np.append(yy,y,0)
-zz = np.append(zz,(y*1e3)/(z[:,2]*1e-3*(43e6)*300/350),0)
+zz = np.append(zz,(y*1e3)/(z[:,2]*43e3*300/350),0)
 
-plt.plot(x, y)
 
-plt.axis([3000, 7200, 0, 13])
 
-plt.show()
+# plt.plot(x, y)
+
+# plt.axis([3000, 7200, 0, 13])
+
+# plt.show()
 
 points = [xx,yy]
 points = np.transpose(points)
@@ -74,8 +76,12 @@ plt.plot(points[11:20,0],points[11:20,1])
 
 grid1 = interp.griddata(points,values,(x_grid,y_grid),method='linear')
 
+Xmax, Ymax = np.unravel_index(np.nanargmax(grid1),np.shape(grid1))
 
-CS = plt.contour(x_grid,y_grid,grid1,13, linestyles = 'dashed')
+print(x_grid[Xmax,Ymax],y_grid[Xmax,Ymax])
+
+CS = plt.contour(x_grid,y_grid,grid1,9, linestyles = 'dashed', linewidths = 0.5,cmap = 'Reds')
+plt.plot(x_grid[Xmax,Ymax],y_grid[Xmax,Ymax],'Dr', markersize =5)
 plt.clabel(CS, inline=1, fontsize=10)
-
+plt.text(x_grid[Xmax,Ymax]+30,y_grid[Xmax,Ymax]+0.2,"%.3f" % np.nanmax(grid1))
 plt.show()
