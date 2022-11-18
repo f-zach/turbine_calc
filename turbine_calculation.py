@@ -19,6 +19,9 @@ P = data.mean().P * 1e3
 p_env = data.mean().p_env*1e2
 T_env = data.mean().T_env
 
+rhoEnv = f.computeDensity(p_env,T_env)
+print("rhoEnv: ", rhoEnv)
+
 res_inlet = f.computeMassFlow(delta_p, p_env, T_env)
 
 m_luft = res_inlet[0]

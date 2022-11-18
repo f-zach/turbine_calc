@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from fluids import atmosphere as atm
 
+
 def computeCirceleArea(d):
     A = pow(d/2, 2) * math.pi
     return A
@@ -83,7 +84,6 @@ def computeMassFlow(delta_p, p, T):
     kappa = 1.4
     n = 1.235
 
-    T = T + 273.15
     # Sea level atmospheric properties
     atmInit = atm.ATMOSPHERE_1976(0)
 
@@ -129,10 +129,13 @@ def computeMassFlow(delta_p, p, T):
 
     # First iteration
     Re = (D*u_D)/mu
-    X.append(10000000000)
-    X.append(Re)
+    X.append(1)
 
-    C.append(1)
+
+    C.append(0.99 - 0.2262 * pow(beta, 4.1) - (0.00175 *
+             pow(beta, 2) - 0.0033 * pow(beta, 4.15))*(1e6/X[0]))
+ 
+    X.append(C[0]*A)
 
     delta.append(A*C[0]-X[0])
     error = np.fabs((A-X[0]/C[0])/A)
@@ -141,7 +144,6 @@ def computeMassFlow(delta_p, p, T):
              pow(beta, 2) - 0.0033 * pow(beta, 4.15))*(1e6/X[1]))
     delta.append(A*C[1]-X[1])
     error = np.fabs((A-X[1]/C[1])/A)
-
     X.append(X[1] - delta[1] * (X[1] - X[0])/(delta[1] - delta[0]))
 
     i = 2
@@ -159,7 +161,22 @@ def computeMassFlow(delta_p, p, T):
     print("Mass flow:", q_m, "kg/m^3")
 
     u1 = q_m/(A_d*rho0)
+    u1_1 = u1
 
+    T_s = T - (pow(u1_1,2))/(2*1004.5)
+    p_s = computeIsentropicPressure(p,T,T_s)
+    rho = p_s/(T_s * R)
+    u1_2 = q_m/(A_d*rho)
+
+
+    while np.abs(u1_1 - u1_2) > 1e-6:
+        u1_1 = u1_2
+        T_s = T - (pow(u1_1,2))/(2*1004.5)
+        p_s = computeIsentropicPressure(p,T,T_s)
+        u1_2 = q_m/(A_d*rho)
+
+
+    u1 = u1_2
     return q_m, u1, A_d
 
 def compressor(pt2,pt3,Tt2,eta_is,m_dot,cp = 1004.5):
@@ -168,3 +185,25 @@ def compressor(pt2,pt3,Tt2,eta_is,m_dot,cp = 1004.5):
     Tt3 = computeTemperatureFromIsEff('compressor', pt2, pt3, Tt2, eta_is)
     Pc = m_dot * cp * (Tt3-Tt2)
     return np.array([Tt3, Pc, Pi_t23, Tt3_is])
+
+    # Print iterations progress
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    # Print New Line on Complete
+    if iteration == total: 
+        print()
